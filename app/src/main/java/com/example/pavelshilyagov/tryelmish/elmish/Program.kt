@@ -59,21 +59,24 @@ fun <TArg, TModel, TMsg> withAnvil(program: Program<TArg, TModel, TMsg, Unit>, c
     Anvil.mount(container, renderer)
     return program.copy(setState = { m, d ->
         renderer.setState(m, d)
-        Anvil.render()
     })
 }
 
 fun <TArg, TModel, TMsg, TView> runWith(arg: TArg, program: Program<TArg, TModel, TMsg, TView>) {
-    val initialState = program.init(arg)
-    var currentModel = initialState.first
+    val (initialModel, initialCmds) = program.init(arg)
+    var currentModel = initialModel
     val loop = actor<TMsg>(context = UI) {
         for (msg in channel) {
             try {
-                val newState = program.update(msg, currentModel)
-                currentModel = newState.first
+                val (updatedModel, cmds) = program.update(msg, currentModel)
+                currentModel = updatedModel
                 async {
                     program.setState(currentModel, { m -> channel.send(m) })
-                    newState.second.forEach { it({ m -> channel.send(m) }) }
+                    cmds.forEach { it({ m -> channel.send(m) }) }
+
+                    if (cmds is System.RenderCmd<TMsg>) { //force Anvil.render() via System.RenderCmd
+                        Anvil.render()
+                    }
                 }
             } catch (e: Exception) {
                 program.onError(Pair("Failed while processing message.", e))
@@ -81,9 +84,10 @@ fun <TArg, TModel, TMsg, TView> runWith(arg: TArg, program: Program<TArg, TModel
         }
     }
     async {
-        program.setState(initialState.first, { m -> loop.send(m) })
-        program.subscribe(initialState.first)
-        initialState.second.forEach { it({ m -> loop.send(m) }) }
+        program.setState(initialModel, { m -> loop.send(m) })
+        Anvil.render() // render action is invoked automatically after any UI events
+        program.subscribe(initialModel)
+        initialCmds.forEach { it({ m -> loop.send(m) }) }
     }
 }
 

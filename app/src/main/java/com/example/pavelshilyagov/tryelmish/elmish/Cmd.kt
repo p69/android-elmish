@@ -8,6 +8,14 @@ typealias Sub<TMsg> = (Dispatch<TMsg>) -> Unit
 
 typealias Cmd<TMsg> = List<Sub<TMsg>>
 
-fun <TMsg> cmdOfMsg (msg:TMsg) : Cmd<TMsg> {
-    return listOf({dispatch-> async { dispatch(msg)}})
+
+
+object System {
+    class RenderCmd<out TMsg>(private val c:Cmd<TMsg>) : Cmd<TMsg> by c
+
+    fun <TMsg> cmdOfMsg (msg:TMsg) : Cmd<TMsg> {
+        return listOf({dispatch-> async { dispatch(msg)}})
+    }
+
+    fun <TMsg> renderCmdOfMsg (msg:TMsg) : Cmd<TMsg> = RenderCmd(cmdOfMsg(msg))
 }
