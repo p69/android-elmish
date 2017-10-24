@@ -1,4 +1,4 @@
-package com.example.pavelshilyagov.tryelmish.Elmish
+package com.example.pavelshilyagov.tryelmish.elmish
 
 import android.annotation.SuppressLint
 import android.content.Context

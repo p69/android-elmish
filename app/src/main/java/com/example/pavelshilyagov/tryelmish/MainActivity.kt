@@ -3,9 +3,9 @@ package com.example.pavelshilyagov.tryelmish
 import android.app.Activity
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
-import com.example.pavelshilyagov.tryelmish.Elmish.mkProgram
-import com.example.pavelshilyagov.tryelmish.Elmish.withAnvil
-import com.example.pavelshilyagov.tryelmish.pure.*
+import com.example.pavelshilyagov.tryelmish.elmish.mkProgram
+import com.example.pavelshilyagov.tryelmish.elmish.withAnvil
+import com.example.pavelshilyagov.tryelmish.main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -15,13 +15,13 @@ class MainActivity : AppCompatActivity() {
         run(this)
     }
 
-    fun run(activity: Activity) {
-        mkProgram<Unit, Model, Msg, Unit>(
-                init = { init() },
+    private fun run(activity: Activity) {
+        mkProgram<Unit, MainModel, Msg, Unit>(
+                init = { Pair(init(), emptyList()) },
                 update = { msg, model -> Pair(update(msg, model), emptyList()) },
                 view = ::view)
         .let { withAnvil(it, findViewById(R.id.content), activity) }
-        .let { com.example.pavelshilyagov.tryelmish.Elmish.run(it) }
+        .let { com.example.pavelshilyagov.tryelmish.elmish.run(it) }
     }
 }
 
