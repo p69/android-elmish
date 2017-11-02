@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
     private fun run(activity: Activity) {
         mkProgram<Unit, MainModel, Msg, Unit>(
                 init = { Pair(init(), emptyList()) },
-                update = { msg, model -> Pair(update(msg, model), emptyList()) },
+                update = ::update,
                 view = ::view)
         .let { withAnvil(it, findViewById(R.id.content), activity) }
         .let { com.example.pavelshilyagov.tryelmish.elmish.run(it) }
