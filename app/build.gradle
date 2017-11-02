@@ -36,6 +36,7 @@ dependencies {
     compile "org.jetbrains.kotlinx:kotlinx-coroutines-android:0.19.1"
     compile 'com.github.kittinunf.fuel:fuel-android:1.11.0'
     compile 'com.github.kittinunf.fuel:fuel-gson:1.11.0'
+    compile 'io.michaelrocks:optional:1.0.1'
 }
 kotlin {
     experimental {

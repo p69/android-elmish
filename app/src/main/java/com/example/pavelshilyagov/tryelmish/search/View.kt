@@ -2,6 +2,7 @@ package com.example.pavelshilyagov.tryelmish.search
 
 import android.widget.LinearLayout
 import com.example.pavelshilyagov.tryelmish.elmish.Dispatch
+import io.michaelrocks.optional.Optional
 import kotlinx.coroutines.experimental.async
 import trikita.anvil.DSL.*
 
@@ -18,17 +19,28 @@ object SearchUI {
                 enabled(!model.isLoading && model.searchValue.isNotEmpty())
             }
             textView {
-                model.current.ifPresent {
-                    text("Current temperature in ${model.searchValue} is ${it.temperature}℃")
-                }.also {
-                    if (model.error.isNotEmpty()) {
-                        text("Error: ${model.error}")
+                when(model.current) {
+                    is Optional.Some -> {
+                        text("Current temperature in ${model.searchValue} is ${model.current.value.temperature}\u2103")
+                    }
+                    is Optional.None -> {
+                        if (model.error.isNotEmpty()) {
+                            text("Error: ${model.error}")
+                        }
                     }
                 }
             }
             button {
                 text("Show details")
-                visibility(model.current.isPresent)
+                when(model.current) {
+                    is Optional.Some -> {
+                        visibility(true)
+                        onClick { async { dispatcher(SearchMsg.ShowDetails(model.current.value)) } }
+                    }
+                    is Optional.None -> {
+                        visibility(false)
+                    }
+                }
             }
         }
     }
