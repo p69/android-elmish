@@ -8,11 +8,12 @@ import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.result.Result
 import kotlinx.coroutines.experimental.Deferred
 import kotlinx.coroutines.experimental.async
+import java.util.*
 
 
 object Search {
     fun init(): SearchModel {
-        return SearchModel("", false, "")
+        return SearchModel("", false, Optional.empty(), error = "")
     }
 
     fun update(msg: SearchMsg, model: SearchModel): Pair<SearchModel, Cmd<SearchMsg>> {
@@ -22,15 +23,15 @@ object Search {
                 val requestCmd = CmdF.ofAsyncFunc(
                         {q->requestByQuery(q)},
                         model.searchValue,
-                        { r -> SearchMsg.OnSearchSuccess(r.current!!) },
+                        SearchMsg::OnSearchSuccess,
                         SearchMsg::OnSearchError)
-                Pair(model.copy(isLoading = true, currentTemp = ""), requestCmd)
+                Pair(model.copy(isLoading = true), requestCmd)
             }
             is SearchMsg.OnSearchSuccess ->
-                Pair(model.copy(isLoading = false, currentTemp = msg.result.temperature.toString()), CmdF.none())
+                Pair(model.copy(isLoading = false, current = Optional.of(createCurrentWeatherModel(msg.result))), CmdF.none())
             is SearchMsg.OnSearchError ->
                 //TODO: show error
-                Pair(model.copy(isLoading = false, currentTemp = "error..."), CmdF.none())
+                Pair(model.copy(isLoading = false, current = Optional.empty(), error = msg.exc.toString()), CmdF.none())
         }
     }
 }
@@ -41,4 +42,14 @@ private suspend fun requestByQuery(query:String): Deferred<Json.Response> = asyn
         is Result.Success -> res.value
         is Result.Failure -> throw res.error
     }
+}
+
+private fun createCurrentWeatherModel(response: Json.Response): CurrentWeatherModel {
+    return CurrentWeatherModel(
+            Location(response.location.name, response.location.country),
+            response.current.temperature,
+            response.current.feelsLikeTemp,
+            WindCondition(response.current.windsSpeed, response.current.windsDirection),
+            response.current.pressure,
+            response.current.humidity)
 }

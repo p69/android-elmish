@@ -8,8 +8,8 @@ import com.google.gson.annotations.SerializedName
 
 object Json {
     data class Response(
-            @SerializedName("location") val location:Location?,
-            @SerializedName("current")val current:Current?)
+            @SerializedName("location") val location:Location,
+            @SerializedName("current")val current:Current)
 
     data class Location(
             @SerializedName("name") val name:String,

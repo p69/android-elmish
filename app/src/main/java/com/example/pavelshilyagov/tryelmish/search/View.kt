@@ -18,7 +18,17 @@ object SearchUI {
                 enabled(!model.isLoading && model.searchValue.isNotEmpty())
             }
             textView {
-                text(model.currentTemp)
+                model.current.ifPresent {
+                    text("Current temperature in ${model.searchValue} is ${it.temperature}℃")
+                }.also {
+                    if (model.error.isNotEmpty()) {
+                        text("Error: ${model.error}")
+                    }
+                }
+            }
+            button {
+                text("Show details")
+                visibility(model.current.isPresent)
             }
         }
     }
