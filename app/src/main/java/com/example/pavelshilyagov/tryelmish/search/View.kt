@@ -21,7 +21,7 @@ object SearchUI {
             textView {
                 when(model.current) {
                     is Optional.Some -> {
-                        text("Current temperature in ${model.searchValue} is ${model.current.value.temperature}\u2103")
+                        text("Current temperature in ${model.searchValue} is ${model.current.value.temperature} ℃")
                     }
                     is Optional.None -> {
                         if (model.error.isNotEmpty()) {

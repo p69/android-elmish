@@ -13,7 +13,7 @@ object DetailsUI {
             orientation(LinearLayout.VERTICAL)
             with(model.weather) {
                 textView {
-                    text("Temperature: ${this.temperature} \u2103 / feels like ${this.feelsLike} \u2103")
+                    text("Temperature: ${this.temperature} ℃ / feels like ${this.feelsLike} ℃")
                 }
                 textView {
                     text("Wind: ${this.wind.speed} km/h ${this.wind.direction}")
