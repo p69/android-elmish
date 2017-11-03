@@ -53,17 +53,18 @@ fun <TArg, TModel, TMsg, TView> mkProgram(
     )
 }
 
-fun <TArg, TModel, TMsg> withAnvil(program: Program<TArg, TModel, TMsg, Unit>, container: View, ctx: Context)
+fun <TArg, TModel, TMsg> (Program<TArg, TModel, TMsg, Unit>).withAnvil(container: View, ctx: Context)
         : Program<TArg, TModel, TMsg, Unit> {
-    val renderer = AnvilRenderer(ctx, view = program.view)
+    val renderer = AnvilRenderer(ctx, view = this.view)
     Anvil.mount(container, renderer)
-    return program.copy(setState = { m, d ->
+    return this.copy(setState = { m, d ->
         renderer.setState(m, d)
         Anvil.render()
     })
 }
 
-fun <TArg, TModel, TMsg, TView> runWith(arg: TArg, program: Program<TArg, TModel, TMsg, TView>) {
+fun <TArg, TModel, TMsg, TView> (Program<TArg, TModel, TMsg, TView>).runWith(arg: TArg) {
+    val program = this
     val (initialModel, initialCmds) = program.init(arg)
     var currentModel = initialModel
     val loop = actor<TMsg>(context = UI) {
@@ -90,6 +91,4 @@ fun <TArg, TModel, TMsg, TView> runWith(arg: TArg, program: Program<TArg, TModel
     }
 }
 
-fun <TModel, TMsg, TView> run(program: Program<Unit, TModel, TMsg, TView>) {
-    return runWith(Unit, program)
-}
+fun <TModel, TMsg, TView> (Program<Unit, TModel, TMsg, TView>).run() = runWith(Unit)

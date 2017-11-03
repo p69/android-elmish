@@ -3,13 +3,17 @@ package com.example.pavelshilyagov.tryelmish.details
 import com.example.pavelshilyagov.tryelmish.elmish.Dispatch
 import trikita.anvil.DSL.*
 import android.widget.LinearLayout
+import trikita.anvil.appcompat.v7.AppCompatv7DSL.actionBarContainer
+import trikita.anvil.appcompat.v7.AppCompatv7DSL.toolbar
 
 object DetailsUI {
     fun view(model: DetailsModel, dispatcher: Dispatch<DetailsMsg>) {
-        linearLayout {
+        actionBarContainer {
             toolbar {
-                text(model.weather.location.name)
+                title(model.weather.location.name)
             }
+        }
+        linearLayout {
             orientation(LinearLayout.VERTICAL)
             with(model.weather) {
                 textView {
