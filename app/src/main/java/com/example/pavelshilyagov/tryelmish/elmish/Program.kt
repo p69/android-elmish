@@ -72,23 +72,19 @@ fun <TArg, TModel, TMsg, TView> (Program<TArg, TModel, TMsg, TView>).runWith(arg
             try {
                 val (updatedModel, cmds) = program.update(msg, currentModel)
                 currentModel = updatedModel
-                async {
-                    program.setState(currentModel, { m ->  channel.send(m) })
-                    for (cmd in cmds) {
-                        cmd({ m ->channel.send(m)})
-                    }
+                program.setState(currentModel, { m ->  channel.send(m) })
+                for (cmd in cmds) {
+                    cmd({ m ->channel.send(m)})
                 }
             } catch (e: Exception) {
                 program.onError(Pair("Failed while processing message.", e))
             }
         }
     }
-    async {
-        program.setState(initialModel, { m ->  loop.send(m) })
-        Anvil.render() // render action is invoked automatically after any UI events
-        program.subscribe(initialModel)
-        initialCmds.forEach { it({ m -> loop.send(m) }) }
-    }
+    program.setState(initialModel, { m ->  loop.send(m) })
+    //Anvil.render()
+    program.subscribe(initialModel)
+    initialCmds.forEach { it({ m -> loop.send(m) }) }
 }
 
 fun <TModel, TMsg, TView> (Program<Unit, TModel, TMsg, TView>).run() = runWith(Unit)

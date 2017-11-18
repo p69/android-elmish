@@ -14,9 +14,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        // probably need some SystemMsg mechanism for updating actionbar
-        supportActionBar?.title = "Hello"
-
         start(this)
     }
 
