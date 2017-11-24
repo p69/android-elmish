@@ -1,9 +1,12 @@
 package com.example.pavelshilyagov.tryelmish.search
 
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import com.example.pavelshilyagov.tryelmish.elmish.Dispatch
 import io.michaelrocks.optional.Optional
 import kotlinx.coroutines.experimental.async
+import trikita.anvil.Anvil
 import trikita.anvil.DSL.*
 
 object SearchUI {
@@ -11,6 +14,9 @@ object SearchUI {
         linearLayout {
             orientation(LinearLayout.VERTICAL)
             editText {
+                init {
+                    Anvil.currentView<EditText>().setText(model.searchValue, TextView.BufferType.EDITABLE)
+                }
                 onTextChanged({ w -> async { dispatcher(SearchMsg.OnTextChanged(w.toString())) } })
             }
             button {

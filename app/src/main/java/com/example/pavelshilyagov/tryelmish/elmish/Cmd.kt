@@ -16,13 +16,9 @@ typealias Cmd<TMsg> = List<Sub<TMsg>>
 object CmdF {
     fun <TMsg> none(): Cmd<TMsg> = emptyList()
 
-    fun <TMsg> ofMsg (msg:TMsg) : Cmd<TMsg> {
-        return listOf({dispatch-> async { dispatch(msg)}})
-    }
+    fun <TMsg> ofMsg (msg:TMsg) : Cmd<TMsg> = listOf({ dispatch-> async { dispatch(msg)}})
 
-    fun <TMsg> ofSub (sub:Sub<TMsg>) : Cmd<TMsg> {
-        return listOf(sub)
-    }
+    fun <TMsg> ofSub (sub:Sub<TMsg>) : Cmd<TMsg> = listOf(sub)
 
     fun <T, TMsg> map(f: (T) -> TMsg, cmd: Cmd<T>): Cmd<TMsg> {
         return cmd.map { dispatcher:(Dispatch<T>) -> Unit ->

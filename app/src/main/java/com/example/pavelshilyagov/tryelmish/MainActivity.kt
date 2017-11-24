@@ -1,29 +1,34 @@
 package com.example.pavelshilyagov.tryelmish
 
-import android.app.Activity
-import android.os.Bundle
-import android.support.v7.app.AppCompatActivity
-import com.example.pavelshilyagov.tryelmish.elmish.CmdF
-import com.example.pavelshilyagov.tryelmish.elmish.mkProgram
-import com.example.pavelshilyagov.tryelmish.elmish.run
-import com.example.pavelshilyagov.tryelmish.elmish.withAnvil
+import com.example.pavelshilyagov.tryelmish.elmish.*
 import com.example.pavelshilyagov.tryelmish.main.*
+import com.trello.navi2.Event
+import com.trello.navi2.rx.RxNavi
+import kotlinx.coroutines.experimental.async
 
-class MainActivity : AppCompatActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        start(this)
+class MainActivity : NaviRxActivity() {
+    init {
+        RxNavi.observe(this, Event.CREATE).subscribe({ _ ->
+            setContentView(R.layout.activity_main)
+            startWithComponent(MainComponent(this))
+        })
     }
 
-    private fun start(activity: Activity) {
-        mkProgram<Unit, MainModel, Msg, Unit>(
-                init = { Pair(init(), CmdF.none()) },
-                update = ::update,
-                view = ::view)
-        .withAnvil(findViewById(R.id.content), activity)
-        .run()
+    private fun startWithComponent(mainComponent: MainComponent) {
+        mkProgramFromComponent(mainComponent)
+                .withSubscription(this::subscription)
+                .withAnvil(findViewById(R.id.content), this)
+                .run()
+    }
+
+    private fun subscription(model: MainModel): Cmd<Msg> {
+        val sub: Sub<Msg> = { dispatcher ->
+            RxNavi.observe(this, Event.BACK_PRESSED)
+                    .subscribe({ _ -> async { dispatcher(Msg.GoBack()) } })
+        }
+
+        return CmdF.ofSub(sub)
     }
 }
+
 
