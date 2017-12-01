@@ -1,53 +1,66 @@
 package com.example.pavelshilyagov.tryelmish.search
 
-import android.widget.EditText
-import android.widget.LinearLayout
-import android.widget.TextView
+import com.example.pavelshilyagov.tryelmish.clickHandler
 import com.example.pavelshilyagov.tryelmish.elmish.Dispatch
+import com.example.pavelshilyagov.tryelmish.elmish.ElmishLithoView
+import com.example.pavelshilyagov.tryelmish.textChangedEventHandler
+import com.facebook.litho.Column
+import com.facebook.litho.Component
+import com.facebook.litho.ComponentContext
+import com.facebook.litho.widget.Text
 import io.michaelrocks.optional.Optional
-import kotlinx.coroutines.experimental.async
-import trikita.anvil.Anvil
-import trikita.anvil.DSL.*
+import kotlinx.coroutines.experimental.launch
 
 object SearchUI {
-    fun view(model: SearchModel, dispatcher: Dispatch<SearchMsg>) {
-        linearLayout {
-            orientation(LinearLayout.VERTICAL)
-            editText {
-                init {
-                    Anvil.currentView<EditText>().setText(model.searchValue, TextView.BufferType.EDITABLE)
+    fun view(model: SearchModel, ctx: ComponentContext, dispatcher: Dispatch<SearchMsg>): ElmishLithoView =
+            ElmishLithoView.ComponentLayoutView(
+                    Column.create(ctx)
+                            .child(com.facebook.litho.widget.EditText.create(ctx)
+                                    .flexGrow(1f)
+                                    .editable(true)
+                                    .text(model.searchValue)
+                                    .textSizeDip(16f)
+                                    .textChangedEventHandler { v -> launch { dispatcher(SearchMsg.OnTextChanged(v)) } }
+                                    .build()
+                            )
+                            .child(Text.create(ctx)
+                                    .text("search")
+                                    .textSizeDip(18f)
+                                    .enabled(!model.isLoading && model.searchValue.isNotEmpty())
+                                    .clickHandler { launch { dispatcher(SearchMsg.SearchByCity) } }
+                                    .build())
+                            .child(Text.create(ctx)
+                                    .textSizeDip(14f)
+                                    .text(createCurrentText(model)))
+                            .child(createShowDetailsButton(model, ctx, dispatcher))
+                            .build()
+            )
+
+    private fun createCurrentText(model: SearchModel): String {
+        return when (model.current) {
+            is Optional.Some -> {
+                val current = model.current.value
+                "Current temperature in ${current.location.name} (${current.location.country}) is ${current.temperature} ℃"
+            }
+            is Optional.None ->
+                if (model.error.isNotEmpty()) {
+                    "Error: ${model.error}"
+                } else {
+                    ""
                 }
-                onTextChanged({ w -> async { dispatcher(SearchMsg.OnTextChanged(w.toString())) } })
+        }
+    }
+
+    private fun createShowDetailsButton(model: SearchModel, ctx: ComponentContext, dispatcher: Dispatch<SearchMsg>): Component<*>? {
+        return when (model.current) {
+            is Optional.Some -> {
+                Text.create(ctx)
+                        .text("show details")
+                        .textSizeDip(18f)
+                        .clickHandler { launch { dispatcher(SearchMsg.ShowDetails(model.current.value)) } }
+                        .build()
             }
-            button {
-                text("search")
-                onClick { async { dispatcher(SearchMsg.SearchByCity()) } }
-                enabled(!model.isLoading && model.searchValue.isNotEmpty())
-            }
-            textView {
-                when(model.current) {
-                    is Optional.Some -> {
-                        text("Current temperature in ${model.searchValue} is ${model.current.value.temperature} ℃")
-                    }
-                    is Optional.None -> {
-                        if (model.error.isNotEmpty()) {
-                            text("Error: ${model.error}")
-                        }
-                    }
-                }
-            }
-            button {
-                text("Show details")
-                when(model.current) {
-                    is Optional.Some -> {
-                        visibility(true)
-                        onClick { async { dispatcher(SearchMsg.ShowDetails(model.current.value)) } }
-                    }
-                    is Optional.None -> {
-                        visibility(false)
-                    }
-                }
-            }
+            is Optional.None -> null
         }
     }
 }

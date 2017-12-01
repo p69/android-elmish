@@ -12,9 +12,9 @@ data class Location(val name:String, val country:String)
 data class CurrentWeatherModel(val location: Location, val temperature: Double, val feelsLike: Double, val wind: WindCondition, val pressure: Double, val humidity: Int)
 
 sealed class SearchMsg {
-    class OnTextChanged(val text: String) : SearchMsg()
-    class SearchByCity : SearchMsg()
-    class OnSearchSuccess(val result: Json.Response) : SearchMsg()
-    class OnSearchError(val exc: Exception) : SearchMsg()
-    class ShowDetails(val details:CurrentWeatherModel) : SearchMsg()
+    data class OnTextChanged(val text: String) : SearchMsg()
+    object SearchByCity : SearchMsg()
+    data class OnSearchSuccess(val result: Json.Response) : SearchMsg()
+    data class OnSearchError(val exc: Exception) : SearchMsg()
+    data class ShowDetails(val details:CurrentWeatherModel) : SearchMsg()
 }

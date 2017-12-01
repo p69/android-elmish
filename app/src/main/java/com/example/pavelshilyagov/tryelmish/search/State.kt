@@ -19,20 +19,20 @@ object Search {
 
     fun update(msg: SearchMsg, model: SearchModel): Triple<SearchModel, Cmd<SearchMsg>, Cmd<Msg>> {
         return when (msg) {
-            is SearchMsg.OnTextChanged -> Triple(model.copy(searchValue = msg.text), CmdF.none(), CmdF.none())
+            is SearchMsg.OnTextChanged -> Triple(model.copy(searchValue = msg.text), CmdF.none, CmdF.none)
             is SearchMsg.SearchByCity -> {
                 val requestCmd = CmdF.ofAsyncFunc(
                         {q->requestByQuery(q)},
                         model.searchValue,
                         SearchMsg::OnSearchSuccess,
                         SearchMsg::OnSearchError)
-                Triple(model.copy(isLoading = true), requestCmd, CmdF.none())
+                Triple(model.copy(isLoading = true), requestCmd, CmdF.none)
             }
             is SearchMsg.OnSearchSuccess ->
-                Triple(model.copy(isLoading = false, current = Optional.Some(createCurrentWeatherModel(msg.result))), CmdF.none(), CmdF.none())
+                Triple(model.copy(isLoading = false, current = Optional.Some(createCurrentWeatherModel(msg.result))), CmdF.none, CmdF.none)
             is SearchMsg.OnSearchError ->
-                Triple(model.copy(isLoading = false, current = Optional.None, error = msg.exc.toString()), CmdF.none(), CmdF.none())
-            is SearchMsg.ShowDetails -> Triple(model, CmdF.none(), CmdF.ofMsg(Msg.GoToDetails(msg.details)))
+                Triple(model.copy(isLoading = false, current = Optional.None, error = msg.exc.toString()), CmdF.none, CmdF.none)
+            is SearchMsg.ShowDetails -> Triple(model, CmdF.none, CmdF.batch(CmdF.ofMsg(Msg.GoToDetails(msg.details)), CmdF.ofMsg(Msg.HideVirtualKeyboard)))
         }
     }
 }

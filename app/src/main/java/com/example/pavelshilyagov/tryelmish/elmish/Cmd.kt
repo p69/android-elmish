@@ -14,7 +14,8 @@ typealias Cmd<TMsg> = List<Sub<TMsg>>
 
 
 object CmdF {
-    fun <TMsg> none(): Cmd<TMsg> = emptyList()
+    inline val none: Cmd<*>
+        get() = emptyList()
 
     fun <TMsg> ofMsg (msg:TMsg) : Cmd<TMsg> = listOf({ dispatch-> async { dispatch(msg)}})
 
@@ -29,7 +30,7 @@ object CmdF {
 
     infix fun <T, TMsg> Cmd<T>.map(f: (T) -> TMsg): Cmd<TMsg> = map(f, this)
 
-    fun <TMsg> batch(cmds:Collection<Cmd<TMsg>>) : Cmd<TMsg> = cmds.flatten()
+    fun <TMsg> batch(vararg cmds:Cmd<TMsg>) : Cmd<TMsg> = cmds.toList().flatten()
 
     fun <TArg, TResult, TMsg> ofAsyncFunc(
             task: suspend (TArg) -> Deferred<TResult>,

@@ -8,18 +8,18 @@ import com.example.pavelshilyagov.tryelmish.search.SearchMsg
 import java.util.*
 
 sealed class Screen {
-    class Search(val model:SearchModel) : Screen()
-    class Details(val model: DetailsModel) : Screen()
-    class ScreenTransition(val from:Screen, val to:Screen, val isBack:Boolean) : Screen()
+    data class Search(val model:SearchModel) : Screen()
+    data class Details(val model: DetailsModel) : Screen()
 }
 
 data class MainModel (val screen:Screen, val backStack: Stack<Screen>)
 
 sealed class Msg {
-    class Search(val msg:SearchMsg) : Msg()
-    class Details(val msg:DetailsMsg) : Msg()
-    class GoToDetails(val details:CurrentWeatherModel) : Msg()
-    class CompleteTransition(val from:Screen, val to:Screen) : Msg()
-    class GoBack : Msg()
+    data class Search(val msg:SearchMsg) : Msg()
+    data class Details(val msg:DetailsMsg) : Msg()
+    data class GoToDetails(val details:CurrentWeatherModel) : Msg()
+    object GoBack : Msg()
+    object Exit : Msg()
+    object HideVirtualKeyboard : Msg()
 }
 
