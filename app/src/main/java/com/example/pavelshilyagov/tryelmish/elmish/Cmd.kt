@@ -1,10 +1,7 @@
 package com.example.pavelshilyagov.tryelmish.elmish
 
 import com.example.pavelshilyagov.tryelmish.then
-import kotlinx.coroutines.experimental.Deferred
-import kotlinx.coroutines.experimental.Unconfined
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.experimental.*
 
 typealias Dispatch<TMsg> = suspend (TMsg) -> Unit
 
@@ -17,20 +14,20 @@ object CmdF {
     inline val none: Cmd<*>
         get() = emptyList()
 
-    fun <TMsg> ofMsg (msg:TMsg) : Cmd<TMsg> = listOf({ dispatch-> async { dispatch(msg)}})
+    fun <TMsg> ofMsg(msg: TMsg): Cmd<TMsg> = listOf({ dispatch -> launch { dispatch(msg) } })
 
-    fun <TMsg> ofSub (sub:Sub<TMsg>) : Cmd<TMsg> = listOf(sub)
+    fun <TMsg> ofSub(sub: Sub<TMsg>): Cmd<TMsg> = listOf(sub)
 
     fun <T, TMsg> map(f: (T) -> TMsg, cmd: Cmd<T>): Cmd<TMsg> {
-        return cmd.map { dispatcher:(Dispatch<T>) -> Unit ->
-            val dispatcherMapper:(Dispatch<TMsg>)->Dispatch<T> = { dispatch: Dispatch<TMsg> -> { x:T -> async { dispatch(f(x)) } } }
+        return cmd.map { dispatcher: (Dispatch<T>) -> Unit ->
+            val dispatcherMapper: (Dispatch<TMsg>) -> Dispatch<T> = { dispatch: Dispatch<TMsg> -> { x: T -> launch { dispatch(f(x)) } } }
             dispatcherMapper then dispatcher
         }
     }
 
     infix fun <T, TMsg> Cmd<T>.map(f: (T) -> TMsg): Cmd<TMsg> = map(f, this)
 
-    fun <TMsg> batch(vararg cmds:Cmd<TMsg>) : Cmd<TMsg> = cmds.toList().flatten()
+    fun <TMsg> batch(vararg cmds: Cmd<TMsg>): Cmd<TMsg> = cmds.toList().flatten()
 
     fun <TArg, TResult, TMsg> ofAsyncFunc(
             task: suspend (TArg) -> Deferred<TResult>,
@@ -56,9 +53,9 @@ object CmdF {
         fun bind(dispatch: Dispatch<TMsg>) {
             try {
                 val res = task(arg)
-                async{dispatch(ofSuccess(res))}
+                launch { dispatch(ofSuccess(res)) }
             } catch (ex: Exception) {
-                async{dispatch(ofError(ex))}
+                launch { dispatch(ofError(ex)) }
             }
         }
         return listOf(::bind)
@@ -68,12 +65,13 @@ object CmdF {
             task: (TArg) -> TResult,
             arg: TArg,
             ofSuccess: (TResult) -> TMsg
-            ): Cmd<TMsg> {
+    ): Cmd<TMsg> {
         fun bind(dispatch: Dispatch<TMsg>) {
             try {
                 val res = task(arg)
-                async{dispatch(ofSuccess(res))}
-            } catch (_:Exception){}
+                launch { dispatch(ofSuccess(res)) }
+            } catch (_: Exception) {
+            }
         }
         return listOf(::bind)
     }
@@ -87,7 +85,7 @@ object CmdF {
             try {
                 task(arg)
             } catch (ex: Exception) {
-                async{dispatch(ofError(ex))}
+                launch { dispatch(ofError(ex)) }
             }
         }
         return listOf(::bind)
