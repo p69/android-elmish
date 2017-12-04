@@ -4,9 +4,32 @@ import android.util.Log
 import kotlinx.coroutines.experimental.android.UI
 import kotlinx.coroutines.experimental.channels.actor
 
+/**
+ * Data class which represents results of updates iteration
+ * @param[TModel] the Type of the model
+ * @param[TMsg] the Type of the messages
+ * @property[model] the model instance
+ * @property[effects] the list of commands which will be executed by passing messages through the program loop
+ */
+data class UpdateResult<out TModel, out TMsg>(val model: TModel, val effects: Cmd<TMsg> = CmdF.none)
+
+/**
+ * Data class which represents results of updates iteration with effects for both: current model and it's parent
+ * @param[TModel] the Type of the model
+ * @param[TMsg] the Type of the messages
+ * @param[TParentMsg] the Type of the parent's messages
+ * @property[model] the model instance
+ * @property[effects] the list of commands which will be executed by passing messages through the program loop
+ * @property[parentEffects] the list of commands for the parent which will be executed by passing messages through the program loop
+ */
+data class UpdateResultWithParentsEffects<out TModel, out TMsg, out TParentMsg>(
+        val model: TModel,
+        val effects: Cmd<TMsg> = CmdF.none,
+        val parentEffects: Cmd<TParentMsg> = CmdF.none)
+
 data class Program<in TArg, TModel, TMsg, out TView>(
-        val init: (TArg) -> Pair<TModel, Cmd<TMsg>>,
-        val update: (TMsg, TModel) -> Pair<TModel, Cmd<TMsg>>,
+        val init: (TArg) -> UpdateResult<TModel, TMsg>,
+        val update: (TMsg, TModel) -> UpdateResult<TModel, TMsg>,
         val subscribe: (TModel) -> Cmd<TMsg>,
         val view: (TModel, Dispatch<TMsg>) -> TView,
         val setState: (TModel, Dispatch<TMsg>) -> Unit,
@@ -15,8 +38,8 @@ data class Program<in TArg, TModel, TMsg, out TView>(
 
 
 fun <TArg, TModel, TMsg, TView> mkProgram(
-        init: (TArg) -> Pair<TModel, Cmd<TMsg>>,
-        update: (TMsg, TModel) -> Pair<TModel, Cmd<TMsg>>,
+        init: (TArg) -> UpdateResult<TModel, TMsg>,
+        update: (TMsg, TModel) -> UpdateResult<TModel, TMsg>,
         view: (TModel, Dispatch<TMsg>) -> TView): Program<TArg, TModel, TMsg, TView> {
     return Program(
             init = init,
@@ -33,8 +56,8 @@ fun <TArg, TModel, TMsg, TView> mkSimple(
         update: (TMsg, TModel) -> TModel,
         view: (TModel, Dispatch<TMsg>) -> TView): Program<TArg, TModel, TMsg, TView> {
     return Program(
-            init = { arg -> Pair(init(arg), CmdF.none) },
-            update = { msg, model -> Pair(update(msg, model), CmdF.none) },
+            init = { arg -> UpdateResult(init(arg)) },
+            update = { msg, model -> UpdateResult(update(msg, model)) },
             view = view,
             subscribe = { _ -> emptyList() },
             setState = { model, dispatcher -> view(model, dispatcher) },
@@ -71,8 +94,8 @@ fun <TArg, TModel, TMsg, TView> (Program<TArg, TModel, TMsg, TView>).runWith(arg
                 currentModel = updatedModel
                 program.setState(currentModel, { m ->  channel.send(m) })
 
-                for (cmd in effects) {
-                    cmd({ m ->channel.send(m)})
+                for (effect in effects) {
+                    effect({ m ->channel.send(m)})
                 }
             } catch (e: Exception) {
                 program.onError(Pair("Failed while processing message.", e))
@@ -81,8 +104,8 @@ fun <TArg, TModel, TMsg, TView> (Program<TArg, TModel, TMsg, TView>).runWith(arg
     }
     program.setState(initialModel, { m ->  loop.send(m) })
 
-    val cmds = initialEffects + program.subscribe(initialModel)
-    cmds.forEach { it({ m -> loop.send(m) }) }
+    val effects = initialEffects + program.subscribe(initialModel)
+    effects.forEach { it({ m -> loop.send(m) }) }
 }
 
 fun <TModel, TMsg, TView> (Program<Unit, TModel, TMsg, TView>).run() = runWith(Unit)
